@@ -4,34 +4,34 @@ namespace SockServer;
 
 abstract class BaseRequestHandler
 {
-	protected $request;
+    protected $request;
 
-	protected $server;
+    protected $server;
 
-	/**
-	 *
-	 */
-	public function __construct($request, $server)
-	{
-		$this->request = $request;
-		$this->server = $server;
-		$this->setup();
-		try {
-			$this->handle();
-		} finally {
-			$this->finish();
-		}
-	}
+    /**
+     *
+     */
+    public function __construct($request, $server)
+    {
+        $this->request = $request;
+        $this->server = $server;
+        $this->setup();
+        try {
+            $this->handle();
+        } finally {
+            $this->finish();
+        }
+    }
 
-	protected function setup()
-	{
-	}
+    protected function setup()
+    {
+    }
 
-	protected function handle()
-	{
-	}
+    protected function handle()
+    {
+    }
 
-	protected function finish()
-	{
-	}
+    protected function finish()
+    {
+    }
 }

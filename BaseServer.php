@@ -33,24 +33,23 @@ class BaseServer
     /**
      *
      */
-    public function serveForever($interval=0.5)
+    public function serveForever($interval = 0.5)
     {
         $timeout = $interval * static::MICROSECONDS_PER_SECOND;
         // trap the signal
         pcntl_signal(SIGTERM, [$this, 'signalHandler']);
         pcntl_signal(SIGHUP,  [$this, 'signalHandler']);
-        pcntl_signal(SIGKILL,  [$this, 'signalHandler']);
         pcntl_signal(SIGINT, [$this, 'signalHandler']);
 
         try {
-            while (!$this->_shutdownRequest) {
+            while (! $this->_shutdownRequest) {
                 $write = $except = null;
                 $read = [$this->socket];
                 if (! is_resource($read[0])) {
                     throw new \RuntimeException(
                         'connection');
                 }
-                $ss = socket_select($read, $write, $except, $timeout === null ? null : 0, $timeout);
+                $ss = @socket_select($read, $write, $except, $timeout === null ? null : 0, $timeout);
                 if ($ss) {
                     foreach ($read as $r) {
                         $this->_handleRequestNoblock();
@@ -71,7 +70,6 @@ class BaseServer
     {
         switch ($signal) {
             case SIGTERM:
-            case SIGKILL:
             case SIGINT:
                 $this->shutdown();
                 $this->serverClose(); // maybe just shutdown?
@@ -90,7 +88,6 @@ class BaseServer
     public function shutdown()
     {
         $this->_shutdownRequest = true;
-        fclose($this->socket);
     }
 
     /**
@@ -116,8 +113,8 @@ class BaseServer
             $timeout = min($timeout, $this->timeout);
         }
 
-        $ss = socket_select($read, $write, $except, $timeout === null ? null : 0, $timeout);
-        if (!$ss) {
+        $ss = @socket_select($read, $write, $except, $timeout === null ? null : 0, $timeout);
+        if (! $ss) {
             $this->handleTimeout();
         } else {
             $this->_handleRequestNoblock();
@@ -135,7 +132,7 @@ class BaseServer
             if ($this->verifyRequest($request)) {
                 try {
                     $this->processRequest($request);
-                } catch(Exception $e) {
+                } catch (Exception $e) {
                     $this->handleError($request);
                     $this->shutdownRequest($request);
                 }
@@ -167,6 +164,7 @@ class BaseServer
     protected function finishRequest($request)
     {
         $req = $this->requestHandlerClass;
+
         return new $req($request, $this);
     }
 
@@ -197,6 +195,10 @@ class BaseServer
      */
     protected function handleError($request)
     {
+        socket_getpeername($request, $address, $port);
+        if ($port) {
+            $address .= ':'.$port;
+        }
         print(str_repeat('-', 40));
         print('Exception happened during processing of request from');
         print($address);

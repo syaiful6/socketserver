@@ -27,7 +27,7 @@ trait ForkingServer
     /**
      *
      */
-    protected function processRequest($request, $address)
+    protected function processRequest($request)
     {
         $pid = pcntl_fork();
         if ($pid === -1) {
@@ -42,12 +42,12 @@ trait ForkingServer
             $this->closeRequest($request);
         } else {
             try {
-                $this->finishRequest($request, $address);
+                $this->finishRequest($request);
                 $this->shutdownRequest($request);
                 exit(0);
             } catch (\Exception $e) {
                 try {
-                    $this->handleError($request, $address);
+                    $this->handleError($request);
                     $this->shutdownRequest($request);
                 } finally {
                     exit(1);
@@ -77,7 +77,7 @@ trait ForkingServer
         foreach ($this->activeChildren as $pid => $_) {
             $res = pcntl_waitpid(-1, $status, WNOHANG);
             // If the process has already exited
-            if($res == -1 || $res > 0) {
+            if ($res === -1 || $res > 0) {
                 unset($this->activeChildren[$pid]);
             }
         }
